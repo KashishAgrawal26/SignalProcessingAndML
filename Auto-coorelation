@@ -1,12 +1,10 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft, fftfreq
 from scipy.signal import correlate
-from scipy.special import jv  # Bessel function of the first kind
 
 # Parameters
-num_samples = 10000  # Number of samples
+num_samples = 100000  # Number of samples
 fs = 1000  # Sampling frequency in Hz
 fd = 10  # Doppler frequency
 t = np.arange(num_samples) / fs  # Time array
@@ -26,16 +24,6 @@ white_noise_freq = fft(white_noise)
 colored_noise_freq = white_noise_freq * filter_H(np.abs(frequencies))
 colored_noise = np.real(ifft(colored_noise_freq))
 
-# Plotting the zoomed colored noise signal for the first 500 samples
-plt.figure(figsize=(10, 6))
-plt.plot(t[:500], colored_noise[:500], label='Colored Noise Signal (Zoomed)', color='green')
-plt.title('Zoomed Colored Noise Signal (First 500 Samples)')
-plt.xlabel('Time (seconds)')
-plt.ylabel('Amplitude')
-plt.legend()
-plt.grid(True)
-plt.show()
-
 # Autocorrelation of the colored noise
 def autocorrelation(signal):
     result = correlate(signal, signal.conj(), mode='full')
@@ -50,16 +38,19 @@ auto_corr_normalized = auto_corr / np.max(np.abs(auto_corr))
 # Time lags for autocorrelation plot
 lags = np.arange(0, len(auto_corr)) / fs  # Time lags in seconds
 
-# Compute the theoretical Bessel function J0(2*pi*fd*lag)
-bessel_vals = jv(0, 2 * np.pi * fd * lags)
+# Limit the x-axis to 20 seconds
+max_lag = 20  # seconds
+max_lag_index = np.searchsorted(lags, max_lag)
 
-# Plot the autocorrelation and Bessel function for comparison
+# Plot the autocorrelation for the specified range
 plt.figure(figsize=(10, 6))
-plt.plot(lags, auto_corr_normalized, label='Autocorrelation (Real Part)', color='blue')
-plt.plot(lags, bessel_vals, label='Bessel Function $J_0(2\\pi f_d t)$', color='red', linestyle='--')
-plt.title('Comparison of Autocorrelation and Theoretical Bessel Function')
+plt.plot(lags[:max_lag_index], auto_corr_normalized[:max_lag_index], label='Autocorrelation (Real Part)', color='blue')
+
+# Add titles and labels
+plt.title('Autocorrelation of Colored Noise')
 plt.xlabel('Time Lag (seconds)')
 plt.ylabel('Normalized Amplitude')
 plt.legend()
 plt.grid(True)
+plt.xlim(0, max_lag)  # Set x-axis limit to 20 seconds
 plt.show()
